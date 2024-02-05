@@ -1,61 +1,75 @@
 <template>
   <v-container
     fluid
-    class="d-flex flex-column align-center justify-center h-screen"
+    class="d-flex flex-column align-center justify-center h-100"
   >
     <h1 class="text-h5">Remova o background de suas fotos</h1>
     <p class="mb-8">100% automatico e free!</p>
 
     <v-col cols="6">
-      <v-card>
-        {{ configs }}
+      <v-card class="mb-6">
+        <v-card-title>Configurações</v-card-title>
+        <v-card-item>
+          {{ configs }}
+        </v-card-item>
       </v-card>
 
-      <v-card ref="dropZoneRef" class="pa-4">
-        <div class="d-flex flex-row align-center justify-center">
-          <div class="dropZone_container dropZone">
-            <p v-if="!isOverDropZone && !preview?.url">
-              Arraste sua imagem para a caixa ou clique no input
-            </p>
+      <v-card ref="dropZoneRef">
+        <v-card-item>
+          <div class="d-flex flex-row align-center justify-center">
+            <div class="dropZone_container dropZone">
+              <p v-if="!isOverDropZone && !preview?.url">
+                Arraste sua imagem para a caixa ou clique no input
+              </p>
 
-            <v-img
-              v-if="preview?.url"
-              :src="preview.url"
-              width="300"
-              height="200"
-              aspect-ratio="16/9"
-              cover
-            ></v-img>
+              <v-img
+                v-if="preview?.url"
+                :src="preview.url"
+                width="300"
+                height="200"
+                aspect-ratio="16/9"
+                cover
+              ></v-img>
+            </div>
+
+            <div class="dropZone_container">
+              <v-img
+                v-if="imgConverted"
+                :src="imgConverted"
+                width="300"
+                height="200"
+                aspect-ratio="16/9"
+                cover
+              >
+              <a :href="imgConverted" download="AwesomeImage.png">
+                download
+              </a>
+            </v-img>
+
+              <p v-if="loading">Removendo!</p>
+
+              <v-btn
+                v-if="!imgConverted"
+                :disabled="!preview?.url"
+                @click.prevent="submitImage"
+              >
+                Remover background
+              </v-btn>
+            </div>
           </div>
-
-          <div class="dropZone_container">
-            <v-img
-              v-if="imgConverted"
-              :src="imgConverted"
-              width="300"
-              height="200"
-              aspect-ratio="16/9"
-              cover
-            ></v-img>
-
-            <p v-if="loading">Removendo!</p>
-
-            <v-btn v-else :disabled="!preview?.url" @click.prevent="submitImage">
-              Remover background
-            </v-btn>
-          </div>
-        </div>
+        </v-card-item>
 
         <v-card-actions class="d-flex flex-column">
-          <v-col cols="8">
+          <div class="w-100">
             <v-file-input
               accept="image/png, image/jpeg"
-              placeholder="Pick an avatar"
-              prepend-icon="mdi-camera"
-              label="Avatar"
+              placeholder="Arraste sua imagem ou clique no input"
+              prepend-icon=""
+              append-inner-icon="mdi-camera"
+              label="Arraste sua imagem ou clique no input"
               @input="handleInput"
             ></v-file-input>
-          </v-col>
+          </div>
         </v-card-actions>
       </v-card>
     </v-col>
@@ -99,11 +113,6 @@ async function submitImage() {
       method: "POST",
       body: formData,
     });
-
-    if(respose instanceof Object) {
-      console.error(respose)
-      return
-    }
 
     imgConverted.value = URL.createObjectURL(respose);
   } catch (e) {
