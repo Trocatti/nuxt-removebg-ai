@@ -3,41 +3,59 @@
     fluid
     class="d-flex flex-column align-center justify-center h-screen"
   >
-    <h1 class="text-h5">Remova o background da sua foto abaixo</h1>
+    <h1 class="text-h5">Remova o background de suas fotos</h1>
     <p class="mb-8">100% automatico e free!</p>
 
-    <v-col cols="4">
-      <v-card ref="dropZoneRef">
-        <p v-if="!isOverDropZone">
-          Arraste sua imagem para a caixa ou clique no input
-        </p>
+    <v-col cols="6">
+      <v-card>
+        {{ configs }}
+      </v-card>
 
-        <v-img
-          width="357"
-          height="200"
-          aspect-ratio="16/9"
-          cover
-          :src="preview?.url"
-        ></v-img>
+      <v-card ref="dropZoneRef" class="pa-4">
+        <div class="d-flex flex-row align-center justify-center">
+          <div class="dropZone_container dropZone">
+            <p v-if="!isOverDropZone && !preview?.url">
+              Arraste sua imagem para a caixa ou clique no input
+            </p>
 
-        <v-img
-          width="357"
-          height="200"
-          aspect-ratio="16/9"
-          cover
-          :src="imgConverted"
-        ></v-img>
+            <v-img
+              v-if="preview?.url"
+              :src="preview.url"
+              width="300"
+              height="200"
+              aspect-ratio="16/9"
+              cover
+            ></v-img>
+          </div>
 
-        <v-card-actions>
-          <v-file-input
-            accept="image/png, image/jpeg"
-            placeholder="Pick an avatar"
-            prepend-icon="mdi-camera"
-            label="Avatar"
-            @input="handleInput"
-          ></v-file-input>
+          <div class="dropZone_container">
+            <v-img
+              v-if="imgConverted"
+              :src="imgConverted"
+              width="300"
+              height="200"
+              aspect-ratio="16/9"
+              cover
+            ></v-img>
 
-          <v-btn @click.prevent="submitImage"> Remover background </v-btn>
+            <p v-if="loading">Removendo!</p>
+
+            <v-btn v-else :disabled="!preview?.url" @click.prevent="submitImage">
+              Remover background
+            </v-btn>
+          </div>
+        </div>
+
+        <v-card-actions class="d-flex flex-column">
+          <v-col cols="8">
+            <v-file-input
+              accept="image/png, image/jpeg"
+              placeholder="Pick an avatar"
+              prepend-icon="mdi-camera"
+              label="Avatar"
+              @input="handleInput"
+            ></v-file-input>
+          </v-col>
         </v-card-actions>
       </v-card>
     </v-col>
@@ -48,6 +66,25 @@
 const dropZoneRef = ref<HTMLDivElement>();
 const preview = ref<{ url: string; file: any }>();
 const imgConverted = ref<string>();
+const loading = ref<boolean>();
+const configs = reactive<Config>({ channels: "rgba" });
+
+type Config = {
+  size?: string;
+  type?: string;
+  typeLevel?: string;
+  format?: string;
+  roi?: string;
+  crop?: boolean;
+  cropMargin?: string;
+  scale?: string;
+  position?: string;
+  channels: string;
+  addShadow?: boolean;
+  semitransparency?: boolean;
+  bgColor?: string;
+  bgImageUrl?: string;
+};
 
 async function submitImage() {
   if (!preview.value?.file) return;
@@ -55,15 +92,28 @@ async function submitImage() {
   const formData = new FormData();
   formData.append("file", preview.value.file);
 
-  const respose: Blob = await $fetch("api/upload", {
-    method: "POST",
-    body: formData,
-  });
+  loading.value = true;
 
-  imgConverted.value = URL.createObjectURL(respose)
+  try {
+    const respose: Blob = await $fetch("api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if(respose instanceof Object) {
+      console.error(respose)
+      return
+    }
+
+    imgConverted.value = URL.createObjectURL(respose);
+  } catch (e) {
+    console.error(e);
+  }
+
+  loading.value = false;
 }
 
-function handleInput (e: Event) {
+function handleInput(e: Event) {
   const inputElement = e.target as HTMLInputElement;
 
   if (inputElement?.files) {
@@ -73,7 +123,6 @@ function handleInput (e: Event) {
 }
 
 function createPreview(files: File[]) {
-
   const [file] = files;
 
   preview.value = {
@@ -85,7 +134,7 @@ function createPreview(files: File[]) {
 function onDrop(files: File[] | null) {
   if (!files) return;
 
-  createPreview(files)
+  createPreview(files);
 }
 
 const { isOverDropZone } = useDropZone(dropZoneRef, {
@@ -93,3 +142,18 @@ const { isOverDropZone } = useDropZone(dropZoneRef, {
   dataTypes: ["image/jpeg", "image/png"],
 });
 </script>
+
+<style type="text/css" setup>
+.dropZone_container {
+  width: 300px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.dropZone {
+  border: 1px dashed gray;
+}
+</style>

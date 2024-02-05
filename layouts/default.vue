@@ -3,13 +3,7 @@
     <AppHeader />
 
     <v-main>
-      <v-container fluid>
-        <v-row>
-          <v-col class="main-content">
-            <slot></slot>
-          </v-col>
-        </v-row>
-      </v-container>
+      <slot></slot>
     </v-main>
 
     <AppFooter />

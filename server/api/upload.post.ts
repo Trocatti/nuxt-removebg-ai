@@ -1,10 +1,3 @@
-interface ApiResponse {
-    // Define the structure of the expected API response
-}
-
-// Typing for the response blob
-type ResponseBlob = Blob;
-
 export default defineEventHandler(async (event) => {
     const payload = await readMultipartFormData(event)
 
@@ -33,16 +26,26 @@ export default defineEventHandler(async (event) => {
 
     const apiKey = useAppConfig().REMOVE_BG_TOKEN;
 
-    const response: Blob = await $fetch('https://api.remove.bg/v1.0/removebg', {
-        method: 'POST',
-        headers: {
-            'Accept': 'image/*',
-            'Content-Type': 'application/json',
-            'X-API-Key': apiKey,
-        },
-        body: data,
-    });
+    try {
 
-    return response
+        const response: Blob = await $fetch('https://api.remove.bg/v1.0/removebg', {
+            method: 'POST',
+            headers: {
+                'Accept': 'image/*',
+                'Content-Type': 'application/json',
+                'X-API-Key': apiKey,
+            },
+            body: data,
+        });
+
+        return response
+
+    } catch (error) {
+        console.error(error);
+    }
+
+    return {
+        status: 400
+    }
 
 })
