@@ -1,0 +1,1 @@
+export const createUrl = (file: Blob | File): string => URL.createObjectURL(file)
