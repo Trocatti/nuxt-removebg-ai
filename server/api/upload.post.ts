@@ -1,9 +1,15 @@
 export default defineEventHandler(async (event) => {
-    const payload = await readMultipartFormData(event)
+    const file = await readMultipartFormData(event)
+    const configs = useRuntimeConfig()
 
-    if (!payload) return
+    if (!file) {
+        return createError({
+            status: 400,
+            statusMessage: 'file required'
+        })
+    }
 
-    const imageBase64 = payload[0].data.toString('base64')
+    const imageBase64 = file[0].data.toString('base64')
 
     const data = {
         "image_file_b64": imageBase64,
@@ -24,7 +30,8 @@ export default defineEventHandler(async (event) => {
         "bg_image_url": ""
     }
 
-    const apiKey = useAppConfig().REMOVE_BG_TOKEN;
+    const apiKey = configs.public.REMOVE_BG_TOKEN
+    if (!apiKey) throw new Error('Invalid API Key');
 
     try {
 
@@ -44,8 +51,9 @@ export default defineEventHandler(async (event) => {
         console.error(error);
     }
 
-    return {
-        status: 400
-    }
+    return createError({
+        status: 400,
+        statusMessage: 'Cloud not found or invalid API'
+    })
 
 })
